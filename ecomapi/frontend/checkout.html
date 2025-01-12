@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <title>Checkout</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Checkout</h1>
+        <div id="cart-items">
+            <!-- Cart items will be displayed here -->
+        </div>
+        <div>
+            <a href="index.html" class="btn btn-secondary">Back to Shop</a>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const cartItemsContainer = document.getElementById("cart-items");
+
+           
+            let cart = JSON.parse(localStorage.getItem('cart')) || {};
+
+            if (Object.keys(cart).length === 0) {
+                cartItemsContainer.innerHTML = "<p>Your cart is empty. Please add products to the cart.</p>";
+            } else {
+                let cartContent = "<h3>Your Cart:</h3><ul class='list-group'>";
+                let totalPrice = 0;
+
+                for (let itemId in cart) {
+                    const item = cart[itemId];
+                    cartContent += `
+                        <li class="list-group-item" id="cart-item-${itemId}">
+                            ${item[1]} (Quantity: <button class="btn btn-sm btn-secondary qty-change" data-id="${itemId}" data-action="decrease">-</button> <span id="quantity-${itemId}">${item[0]}</span> <button class="btn btn-sm btn-secondary qty-change" data-id="${itemId}" data-action="increase">+</button>) - $${item[2].toFixed(2)}
+                            <button class="btn btn-sm btn-danger float-right delete-item" data-id="${itemId}">Delete</button>
+                        </li>
+                    `;
+                    totalPrice += item[2];
+                }
+
+                cartContent += `</ul><h4>Total Price: $${totalPrice.toFixed(2)}</h4>`;
+                cartItemsContainer.innerHTML = cartContent;
+            }
+
+            
+            cartItemsContainer.addEventListener("click", function (event) {
+                if (event.target.classList.contains("qty-change")) {
+                    const itemId = event.target.getAttribute("data-id");
+                    const action = event.target.getAttribute("data-action");
+
+                    
+                    if (action === "increase") {
+                        cart[itemId][0] += 1;
+                        cart[itemId][2] += cart[itemId][2] / cart[itemId][0]; 
+                    } else if (action === "decrease" && cart[itemId][0] > 1) {
+                        cart[itemId][0] -= 1;
+                        cart[itemId][2] -= cart[itemId][2] / (cart[itemId][0] + 1); 
+                    }
+
+                   
+                    localStorage.setItem('cart', JSON.stringify(cart));
+
+                    
+                    document.getElementById(`quantity-${itemId}`).textContent = cart[itemId][0];
+                    updateTotalPrice();
+                }
+                
+                if (event.target.classList.contains("delete-item")) {
+                    const itemId = event.target.getAttribute("data-id");
+
+                    
+                    delete cart[itemId];
+
+                    
+                    localStorage.setItem('cart', JSON.stringify(cart));
+
+                    
+                    document.getElementById(`cart-item-${itemId}`).remove();
+
+                    
+                    updateTotalPrice();
+                }
+            });
+
+            
+            function updateTotalPrice() {
+                let totalPrice = 0;
+                for (let itemId in cart) {
+                    totalPrice += cart[itemId][2];
+                }
+                document.querySelector("h4").textContent = `Total Price: $${totalPrice.toFixed(2)}`;
+            }
+        });
+    </script>
+</body>
+</html>
